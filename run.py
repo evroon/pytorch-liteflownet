@@ -9,6 +9,8 @@ import os
 import PIL
 import PIL.Image
 import sys
+import cv2
+import flow_vis
 
 try:
 	from .correlation import correlation # the custom cost volume layer
@@ -372,7 +374,7 @@ def estimate(tenFirst, tenSecond):
 
 if __name__ == '__main__':
 	tenFirst = torch.FloatTensor(numpy.ascontiguousarray(numpy.array(PIL.Image.open(arguments_strFirst))[:, :, ::-1].transpose(2, 0, 1).astype(numpy.float32) * (1.0 / 255.0)))
-	tenSecond = torch.FloatTensor(numpy.ascontiguousarray(numpy.array(PIL.Image.open(arguments_strSecond))[:, :, ::-1].transpose(2, 0, 1).astype(numpy.float32) * (1.0 / 255.0)))
+	tenSecond = torch.FloatTensor(numpy.ascontiguousarray(numpy.array(PIL.Image.open(arguments_strSecond))[:, :, ::-1].transpose(2, 0, 1).astype(numpy.float32) * (1.0 / 255.0)))\
 
 	tenOutput = estimate(tenFirst, tenSecond)
 
@@ -381,6 +383,10 @@ if __name__ == '__main__':
 	numpy.array([ 80, 73, 69, 72 ], numpy.uint8).tofile(objOutput)
 	numpy.array([ tenOutput.shape[2], tenOutput.shape[1] ], numpy.int32).tofile(objOutput)
 	numpy.array(tenOutput.numpy().transpose(1, 2, 0), numpy.float32).tofile(objOutput)
+
+	flow_output = tenOutput.numpy().transpose(1, 2, 0)
+	flow_color = flow_vis.flow_to_color(flow_output)
+	cv2.imwrite('output.png', flow_color.astype(numpy.uint8)[..., ::-1])
 
 	objOutput.close()
 # end
